@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register – TaskBoard Lite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f4f6f9;
+    }
+
+    .register-container {
+      max-width: 450px;
+      margin: 60px auto;
+      padding: 30px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #007bff;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .form-control:focus {
+      box-shadow: none;
+      border-color: #007bff;
+    }
+
+    .btn-primary {
+      width: 100%;
+    }
+
+    .text-center a {
+      text-decoration: none;
+    }
+
+    #registerMessage {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <div class="brand">TaskBoard Lite</div>
+    <form id="registerForm">
+      <!-- Full Name - optional, not used in backend -->
+      <div class="mb-3">
+        <label for="fullName" class="form-label">Full Name</label>
+        <input type="text" class="form-control" id="fullName" placeholder="John Doe">
+      </div>
+      <div class="mb-3">
+        <label for="regEmail" class="form-label">Email address</label>
+        <input type="email" class="form-control" id="regEmail" placeholder="Enter email" required>
+      </div>
+      <div class="mb-3">
+        <label for="regPassword" class="form-label">Password</label>
+        <input type="password" class="form-control" id="regPassword" placeholder="Enter password" required>
+      </div>
+      <div class="mb-3">
+        <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+
+    <p id="registerMessage"></p>
+
+    <div class="text-center mt-3">
+      <p>Already have an account? <a href="login.html">Login</a></p>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Registration Script (Backend-Connected) -->
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const message = document.getElementById('registerMessage');
+
+      if (password !== confirm) {
+        message.innerText = "❌ Passwords do not match!";
+        message.style.color = "red";
+        return;
+      }
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          credentials: "include"
+        });
+
+        const data = await res.json();
+        message.innerText = data.message;
+        message.style.color = res.ok ? "green" : "red";
+
+        if (res.ok) {
+          setTimeout(() => window.location.href = "login.html", 1500);
+        }
+
+      } catch (err) {
+        message.innerText = "⚠️ Registration failed. Try again.";
+        message.style.color = "red";
+      }
+    });
+  </script>
+</body>
+</html>

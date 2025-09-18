@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TaskBoard Lite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f6f9;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .task-board {
+      margin-top: 30px;
+      margin-bottom: 50px;
+    }
+
+    .column {
+      min-height: 500px;
+    }
+
+    .card-header {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .card-body {
+      background-color: #ffffff;
+      padding: 15px;
+      border-radius: 0 0 6px 6px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .card {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      border: none;
+      border-radius: 8px;
+    }
+
+    .navbar {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn {
+      font-weight: 500;
+    }
+
+    /* 🌗 Dark mode support */
+    .dark-mode {
+      background-color: #121212 !important;
+      color: white !important;
+    }
+
+    .dark-mode .card {
+      background-color: #1e1e1e !important;
+      color: white !important;
+    }
+
+    .dark-mode .card-header {
+      background-color: #2c2c2c !important;
+      color: white !important;
+    }
+
+    .dark-mode .btn {
+      border-color: #fff;
+    }
+
+    @media (max-width: 768px) {
+      .card-body {
+        min-height: auto;
+        padding: 10px;
+      }
+
+      .card-title {
+        font-size: 1rem;
+      }
+
+      .btn {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+      }
+
+      .navbar-brand {
+        font-size: 1.1rem;
+      }
+
+      .navbar .btn {
+        margin-bottom: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔒 Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
+    <a class="navbar-brand" href="#">TaskBoard Lite</a>
+    <div class="ms-auto d-flex flex-wrap gap-2">
+      <button class="btn btn-light" id="addTaskBtn" data-bs-toggle="modal" data-bs-target="#addTaskModal">+ Add Task</button>
+      <button class="btn btn-success" id="saveBoardBtn">💾 Save Board</button>
+      <button class="btn btn-secondary" id="loadBoardBtn">📁 Load Board</button>
+      <a href="setting.html" class="btn btn-outline-light">⚙ Settings</a>
+      <a href="about.html" class="btn btn-outline-light"> About</a>
+      <button class="btn btn-outline-light" id="logoutBtn">Logout</button>
+      <input type="file" id="loadInput" style="display:none;">
+    </div>
+  </nav>
+
+  <!-- 📋 Task Columns -->
+  <div class="container-fluid task-board">
+    <div class="row g-4">
+      <div class="col-12 col-md-4">
+        <div class="card column">
+          <div class="card-header bg-info text-white">To Do</div>
+          <div class="card-body task-list" id="todo"></div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="card column">
+          <div class="card-header bg-warning text-dark">In Progress</div>
+          <div class="card-body task-list" id="in-progress"></div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="card column">
+          <div class="card-header bg-success text-white">Done</div>
+          <div class="card-body task-list" id="done"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ➕ Add Task Modal -->
+  <div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="taskForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Add New Task</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="taskTitle" class="form-label">Task Title</label>
+              <input type="text" class="form-control" id="taskTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="taskDueDate" class="form-label">Due Date</label>
+              <input type="date" class="form-control" id="taskDueDate">
+            </div>
+            <div class="mb-3">
+              <label for="taskStatus" class="form-label">Status</label>
+              <select class="form-select" id="taskStatus">
+                <option value="todo" selected>To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" type="submit">Add Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🧠 Script Zone -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 🔐 Redirect if not logged in
+    if (localStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    // 🌗 Apply Dark Mode from settings
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+
+    // 🚪 Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('loggedIn');
+      localStorage.removeItem('taskboard_user');
+      window.location.href = 'login.html';
+    });
+
+    const taskForm = document.getElementById('taskForm');
+    const titleInput = document.getElementById('taskTitle');
+    const dueDateInput = document.getElementById('taskDueDate');
+    const statusSelect = document.getElementById('taskStatus');
+
+    const columns = {
+      "todo": document.getElementById('todo'),
+      "in-progress": document.getElementById('in-progress'),
+      "done": document.getElementById('done')
+    };
+
+    let tasks = JSON.parse(localStorage.getItem("taskBoard")) || [];
+
+    // Load tasks
+    window.addEventListener("load", () => {
+      tasks.forEach(task => {
+        const card = createTaskCard(task);
+        columns[task.status].appendChild(card);
+      });
+    });
+
+    function saveTasksToLocalStorage() {
+      localStorage.setItem("taskBoard", JSON.stringify(tasks));
+    }
+
+    function createTaskCard(task) {
+      const card = document.createElement('div');
+      card.className = 'card mb-3';
+      card.setAttribute('draggable', 'true');
+      card.setAttribute('id', task.id);
+
+      card.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', task.id);
+      });
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+
+      const title = document.createElement('h5');
+      title.className = 'card-title';
+      title.innerText = task.title;
+
+      body.appendChild(title);
+
+      if (task.dueDate) {
+        const date = document.createElement('p');
+        date.className = 'card-text';
+        date.innerHTML = `<small class="text-muted">Due: ${task.dueDate}</small>`;
+        body.appendChild(date);
+      }
+
+      card.appendChild(body);
+      return card;
+    }
+
+    taskForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      const dueDate = dueDateInput.value;
+      const status = statusSelect.value;
+      if (!title) return;
+
+      const newTask = {
+        id: `task-${Date.now()}`,
+        title,
+        dueDate,
+        status
+      };
+
+      tasks.push(newTask);
+      saveTasksToLocalStorage();
+      columns[status].appendChild(createTaskCard(newTask));
+
+      taskForm.reset();
+      bootstrap.Modal.getInstance(document.getElementById('addTaskModal')).hide();
+    });
+
+    // Drag and drop
+    Object.keys(columns).forEach(status => {
+      const column = columns[status];
+      column.addEventListener('dragover', e => e.preventDefault());
+      column.addEventListener('drop', e => {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('text/plain');
+        const taskEl = document.getElementById(taskId);
+        if (taskEl) {
+          column.appendChild(taskEl);
+          const task = tasks.find(t => t.id === taskId);
+          if (task) {
+            task.status = status;
+            saveTasksToLocalStorage();
+          }
+        }
+      });
+    });
+
+    // Save/Load board
+    document.getElementById('saveBoardBtn').addEventListener('click', () => {
+      const dataStr = JSON.stringify(tasks, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'taskboard.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('loadBoardBtn').addEventListener('click', () => {
+      document.getElementById('loadInput').click();
+    });
+
+    document.getElementById('loadInput').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            tasks = imported;
+            saveTasksToLocalStorage();
+            reloadUI();
+          } else {
+            alert('Invalid file format.');
+          }
+        } catch {
+          alert('Failed to load file.');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function reloadUI() {
+      Object.values(columns).forEach(col => col.innerHTML = '');
+      tasks.forEach(task => {
+        columns[task.status].appendChild(createTaskCard(task));
+      });
+    }
+  </script>
+</body>
+</html>
